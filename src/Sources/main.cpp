@@ -9,6 +9,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <string>
+#include <chrono>
 
 static const char* vertexSource = R"glsl(
     #version 150 core
@@ -23,10 +24,11 @@ static const char* vertexSource = R"glsl(
 static const char* fragSource = R"glsl(
     #version 150 core
 
+    uniform vec3 triangleColor;
     out vec4 outColor;
 
     void main() {
-        outColor = vec4(1.0, 0.5, 0.2, 1.0);
+        outColor = vec4(triangleColor, 1.0);
     }
 )glsl";
 
@@ -112,6 +114,11 @@ int main(int argc, char * argv[]) {
     glVertexAttribPointer(posAttrib, 2, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(posAttrib);
 
+    // Tutorial about using uniforms
+    GLint uniColor = glGetUniformLocation(shaderProg, "triangleColor");
+    glUniform3f(uniColor, 1.0f, 0.5f, 0.2f);
+    auto t_start = std::chrono::high_resolution_clock::now();
+
     // Rendering Loop
     while (glfwWindowShouldClose(mWindow) == false) {
         if (glfwGetKey(mWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS)
@@ -122,6 +129,11 @@ int main(int argc, char * argv[]) {
         glClear(GL_COLOR_BUFFER_BIT);
 
         glDrawArrays(GL_TRIANGLES, 0, 3);
+
+        // Change color
+        auto t_now = std::chrono::high_resolution_clock::now();
+        float delta = std::chrono::duration_cast<std::chrono::duration<float>>(t_now - t_start).count();
+        glUniform3f(uniColor, (sin(delta * 4.0f) + 1.0f) / 2.0f, 0.5f, 0.2f);
 
         // Flip Buffers and Draw
         glfwSwapBuffers(mWindow);
