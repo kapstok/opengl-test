@@ -21,7 +21,7 @@ static const char* vertexSource = R"glsl(
 )glsl";
 
 static const char* fragSource = R"glsl(
-    #version core 150
+    #version 150 core
 
     out vec4 outColor;
 
@@ -84,6 +84,22 @@ int main(int argc, char * argv[]) {
     GLuint fragShader = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragShader, 1, &fragSource, NULL);
     glCompileShader(fragShader);
+
+    // Check if succesfully compiled
+    GLint status_v;
+    glGetShaderiv(vertShader, GL_COMPILE_STATUS, &status_v);
+    if (status_v == GL_FALSE) {
+        char buffer[512];
+        glGetShaderInfoLog(vertShader, 512, NULL, buffer);
+        printf("Failed to compile vert shader:\n%s\n", buffer);
+    }
+    GLint status_f;
+    glGetShaderiv(fragShader, GL_COMPILE_STATUS, &status_f);
+    if (status_f == GL_FALSE) {
+        char buffer[512];
+        glGetShaderInfoLog(fragShader, 512, NULL, buffer);
+        printf("Failed to compile frag shader:\n%s\n", buffer);
+    }
 
     GLuint shaderProg = glCreateProgram();
     glAttachShader(shaderProg, vertShader);
