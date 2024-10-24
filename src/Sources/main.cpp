@@ -13,22 +13,23 @@
 
 static const char* vertexSource = R"glsl(
     #version 150 core
-
     in vec2 position;
-
-    void main() {
+    in vec3 color;
+    out vec3 Color;
+    void main()
+    {
+        Color = color;
         gl_Position = vec4(position, 0.0, 1.0);
     }
 )glsl";
 
 static const char* fragSource = R"glsl(
     #version 150 core
-
-    uniform vec3 triangleColor;
+    in vec3 Color;
     out vec4 outColor;
-
-    void main() {
-        outColor = vec4(triangleColor, 1.0);
+    void main()
+    {
+        outColor = vec4(Color, 1.0);
     }
 )glsl";
 
@@ -54,21 +55,29 @@ int main(int argc, char * argv[]) {
     gladLoadGL();
     fprintf(stderr, "OpenGL %s\n", glGetString(GL_VERSION));
 
-    // Generate a triangle
+    GLuint elements[] = {
+        0, 1, 2,
+        2, 3, 0
+    };
+
+    // Vertices. Starts syntax: x, y, r, g, b
     float vertices[] = {
-        0.0f, 0.5f,
-        0.5f, -0.5f,
-        -0.5f, -0.5f
+        -0.5f,  0.5f, 1.0f, 0.0f, 0.0f, // Top-left
+         0.5f,  0.5f, 0.0f, 1.0f, 0.0f, // Top-right
+         0.5f, -0.5f, 0.0f, 0.0f, 1.0f, // Bottom-right
+        -0.5f, -0.5f, 1.0f, 1.0f, 1.0f  // Bottom-left
     };
     GLuint vbo, vao, ebo;
     glGenBuffers(1, &vbo); // Generate 1 buffer
     glGenVertexArrays(1, &vao);
-    //glGenBuffers(1, &ebo);
+    glBindVertexArray(vao);
+
+    glGenBuffers(1, &ebo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(elements), elements, GL_STATIC_DRAW);
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glBindVertexArray(vao);
 
     //glBindBuffer(GL_ARRAY_BUFFER, ebo);
     //glBufferData(GL_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
@@ -111,13 +120,17 @@ int main(int argc, char * argv[]) {
     glUseProgram(shaderProg);
 
     GLint posAttrib = glGetAttribLocation(shaderProg, "position");
-    glVertexAttribPointer(posAttrib, 2, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(posAttrib);
+    glVertexAttribPointer(posAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 5, 0);
+
+    GLint colAttrib = glGetAttribLocation(shaderProg, "color");
+    glEnableVertexAttribArray(colAttrib);
+    glVertexAttribPointer(colAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 5, (void*)(sizeof(GLfloat) * 2));
 
     // Tutorial about using uniforms
-    GLint uniColor = glGetUniformLocation(shaderProg, "triangleColor");
-    glUniform3f(uniColor, 1.0f, 0.5f, 0.2f);
-    auto t_start = std::chrono::high_resolution_clock::now();
+    //GLint uniColor = glGetUniformLocation(shaderProg, "color");
+    //glUniform3f(uniColor, 1.0f, 0.5f, 0.2f);
+    //auto t_start = std::chrono::high_resolution_clock::now();
 
     // Rendering Loop
     while (glfwWindowShouldClose(mWindow) == false) {
@@ -128,19 +141,32 @@ int main(int argc, char * argv[]) {
         glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        //glDrawArrays(GL_TRIANGLES, 0, 3);
+        /*
+        * len kan alleen berekend worden als de array in dezelfde scope zit.
+        * Anders, als het als arg meegegeven wordt, wordt de array omgezet in
+        * een pointer. Dan werkt het weer niet :/
+        */
+        size_t len = sizeof(elements) / sizeof(GLuint);
+        glDrawElements(GL_TRIANGLES, len, GL_UNSIGNED_INT, 0);
 
         // Change color
-        auto t_now = std::chrono::high_resolution_clock::now();
-        float delta = std::chrono::duration_cast<std::chrono::duration<float>>(t_now - t_start).count();
-        glUniform3f(uniColor, (sin(delta * 4.0f) + 1.0f) / 2.0f, 0.5f, 0.2f);
+        //auto t_now = std::chrono::high_resolution_clock::now();
+        //float delta = std::chrono::duration_cast<std::chrono::duration<float>>(t_now - t_start).count();
+        //glUniform3f(uniColor, (sin(delta * 4.0f) + 1.0f) / 2.0f, 0.5f, 0.2f);
 
         // Flip Buffers and Draw
         glfwSwapBuffers(mWindow);
         glfwPollEvents();
     }
     
-    // TODO: Delete and detach shaders!
+    glDeleteProgram(shaderProg);
+    glDeleteShader(fragShader);
+    glDeleteShader(vertShader);
+
+    glDeleteBuffers(1, &vbo);
+
+    glDeleteVertexArrays(1, &vao);
     
     glfwTerminate();
     return EXIT_SUCCESS;
