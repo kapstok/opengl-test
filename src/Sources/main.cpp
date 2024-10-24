@@ -11,27 +11,24 @@
 #include <string>
 #include <chrono>
 
-static const char* vertexSource = R"glsl(
-    #version 150 core
-    in vec2 position;
-    in vec3 color;
-    out vec3 Color;
-    void main()
-    {
-        Color = color;
-        gl_Position = vec4(position, 0.0, 1.0);
+static const char* vertexSource = R"(
+    #version 330 core
+    layout(location = 0) in vec3 aPos;
+    uniform mat4 model;
+    uniform mat4 view;
+    uniform mat4 projection;
+    void main() {
+        gl_Position = projection * view * model * vec4(aPos, 1.0);
     }
-)glsl";
+)";
 
-static const char* fragSource = R"glsl(
-    #version 150 core
-    in vec3 Color;
-    out vec4 outColor;
-    void main()
-    {
-        outColor = vec4(Color, 1.0);
+static const char* fragSource = R"(
+    #version 330 core
+    out vec4 FragColor;
+    void main() {
+        FragColor = vec4(1.0, 0.5, 0.2, 1.0);  // Orange color
     }
-)glsl";
+)";
 
 int main(int argc, char * argv[]) {
 
@@ -54,18 +51,33 @@ int main(int argc, char * argv[]) {
     glfwMakeContextCurrent(mWindow);
     gladLoadGL();
     fprintf(stderr, "OpenGL %s\n", glGetString(GL_VERSION));
+    glEnable(GL_DEPTH_TEST);
 
     GLuint elements[] = {
-        0, 1, 2,
-        2, 3, 0
+        0, 1, 2, // Back
+        2, 3, 0,
+        4, 5, 6, // Front
+        6, 7, 4,
+        0, 3, 7, // Left
+        7, 4, 0,
+        1, 5, 6, // Right
+        6, 2, 1,
+        0, 1, 5, // Bottom
+        5, 4, 0,
+        3, 2, 6, // Top
+        6, 7, 3
     };
 
     // Vertices. Starts syntax: x, y, r, g, b
     float vertices[] = {
-        -0.5f,  0.5f, 1.0f, 0.0f, 0.0f, // Top-left
-         0.5f,  0.5f, 0.0f, 1.0f, 0.0f, // Top-right
-         0.5f, -0.5f, 0.0f, 0.0f, 1.0f, // Bottom-right
-        -0.5f, -0.5f, 1.0f, 1.0f, 1.0f  // Bottom-left
+        -0.5f, -0.5f, -0.5f,
+         0.5f, -0.5f, -0.5f,
+         0.5f,  0.5f, -0.5f,
+        -0.5f,  0.5f, -0.5f,
+        -0.5f, -0.5f,  0.5f,
+         0.5f, -0.5f,  0.5f,
+         0.5f,  0.5f,  0.5f,
+        -0.5f,  0.5f,  0.5f
     };
     GLuint vbo, vao, ebo;
     glGenBuffers(1, &vbo); // Generate 1 buffer
@@ -115,22 +127,36 @@ int main(int argc, char * argv[]) {
     GLuint shaderProg = glCreateProgram();
     glAttachShader(shaderProg, vertShader);
     glAttachShader(shaderProg, fragShader);
-    glBindFragDataLocation(shaderProg, 0, "outColor");
+    //glBindFragDataLocation(shaderProg, 0, "outColor");
     glLinkProgram(shaderProg);
     glUseProgram(shaderProg);
 
-    GLint posAttrib = glGetAttribLocation(shaderProg, "position");
-    glEnableVertexAttribArray(posAttrib);
-    glVertexAttribPointer(posAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 5, 0);
-
+    //GLint posAttrib = glGetAttribLocation(shaderProg, "position");
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, 0);
+    /*
     GLint colAttrib = glGetAttribLocation(shaderProg, "color");
     glEnableVertexAttribArray(colAttrib);
     glVertexAttribPointer(colAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 5, (void*)(sizeof(GLfloat) * 2));
+    */
 
     // Tutorial about using uniforms
     //GLint uniColor = glGetUniformLocation(shaderProg, "color");
     //glUniform3f(uniColor, 1.0f, 0.5f, 0.2f);
     //auto t_start = std::chrono::high_resolution_clock::now();
+
+    // Gebruik maken van 3D transformatie
+    glm::mat4 model = glm::mat4(1.0f); // Model matrix, geen transformaties
+    glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, -2.0f, -8.0f)); // Camera iets naar achteren
+    glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)mWidth / (float)mHeight, 0.1f, 100.0f); // Perspectiefprojectie
+
+    GLuint modelLoc = glGetUniformLocation(shaderProg, "model");
+    GLuint viewLoc = glGetUniformLocation(shaderProg, "view");
+    GLuint projLoc = glGetUniformLocation(shaderProg, "projection");
+
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+    glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
     // Rendering Loop
     while (glfwWindowShouldClose(mWindow) == false) {
@@ -139,7 +165,7 @@ int main(int argc, char * argv[]) {
 
         // Background Fill Color
         glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         //glDrawArrays(GL_TRIANGLES, 0, 3);
         /*
@@ -165,6 +191,7 @@ int main(int argc, char * argv[]) {
     glDeleteShader(vertShader);
 
     glDeleteBuffers(1, &vbo);
+    glDeleteBuffers(1, &ebo);
 
     glDeleteVertexArrays(1, &vao);
     
