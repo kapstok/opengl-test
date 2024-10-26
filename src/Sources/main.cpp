@@ -10,28 +10,56 @@
 #include <cstdlib>
 #include <string>
 #include <chrono>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 static const char* vertexSource = R"(
-    #version 330 core
-    layout(location = 0) in vec3 aPos;
-    uniform mat4 model;
-    uniform mat4 view;
-    uniform mat4 projection;
-    void main() {
-        gl_Position = projection * view * model * vec4(aPos, 1.0);
-    }
+#version 330
+uniform mat4 view;
+uniform mat4 projection;
+uniform mat4 model;
+
+layout(location = 0) in vec3 vert;
+layout(location = 1) in vec3 vertNormal;
+
+out vec3 fragVert;
+out vec3 fragNormal;
+
+void main() {
+    fragNormal = vertNormal;
+    fragVert = vert;
+    gl_Position = projection * view * model * vec4(vert, 1);
+}
 )";
 
 static const char* fragSource = R"(
-    #version 330 core
-    out vec4 FragColor;
-    void main() {
-        FragColor = vec4(1.0, 0.5, 0.2, 1.0);  // Orange color
-    }
+#version 330
+
+uniform mat4 model;
+uniform struct Light {
+   vec3 position;
+   vec3 intensities;
+} light;
+uniform vec3 ambient;
+
+in vec3 fragNormal;
+in vec3 fragVert;
+out vec4 fragColor;
+
+void main() {
+    mat3 normalMatrix = transpose(inverse(mat3(model)));
+    vec3 normal = normalize(normalMatrix * fragNormal);
+    vec3 fragPosition = vec3(model * vec4(fragVert, 1));
+    vec3 surfaceToLight = light.position - fragPosition;
+    float brightness = dot(normal, surfaceToLight) / (length(surfaceToLight) * length(normal));
+    brightness = clamp(brightness, 0, 1);
+    vec3 diffuse = brightness * light.intensities;
+    fragColor = vec4(diffuse + ambient, 1);
+}
 )";
 
 int main(int argc, char * argv[]) {
-
     // Load GLFW and Create a Window
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -41,160 +69,138 @@ int main(int argc, char * argv[]) {
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
     auto mWindow = glfwCreateWindow(mWidth, mHeight, "OpenGL", nullptr, nullptr);
 
-    // Check for Valid Context
     if (mWindow == nullptr) {
         fprintf(stderr, "Failed to Create OpenGL Context");
         return EXIT_FAILURE;
     }
 
-    // Create Context and Load OpenGL Functions
     glfwMakeContextCurrent(mWindow);
     gladLoadGL();
-    fprintf(stderr, "OpenGL %s\n", glGetString(GL_VERSION));
     glEnable(GL_DEPTH_TEST);
 
-    GLuint elements[] = {
-        0, 1, 2, // Back
-        2, 3, 0,
-        4, 5, 6, // Front
-        6, 7, 4,
-        0, 3, 7, // Left
-        7, 4, 0,
-        1, 5, 6, // Right
-        6, 2, 1,
-        0, 1, 5, // Bottom
-        5, 4, 0,
-        3, 2, 6, // Top
-        6, 7, 3
+    GLfloat vertexData[] = {
+        // x, y, z, normalx, normaly, normalz
+        // bottom
+        -1.0f,-1.0f,-1.0f, 0.0f, -1.0f, 0.0f,
+         1.0f,-1.0f,-1.0f, 0.0f, -1.0f, 0.0f,
+        -1.0f,-1.0f, 1.0f, 0.0f, -1.0f, 0.0f,
+         1.0f,-1.0f,-1.0f, 0.0f, -1.0f, 0.0f,
+         1.0f,-1.0f, 1.0f, 0.0f, -1.0f, 0.0f,
+        -1.0f,-1.0f, 1.0f, 0.0f, -1.0f, 0.0f,
+
+        // top
+        -1.0f, 1.0f,-1.0f, 0.0f, 1.0f, 0.0f,
+        -1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+         1.0f, 1.0f,-1.0f, 0.0f, 1.0f, 0.0f,
+         1.0f, 1.0f,-1.0f, 0.0f, 1.0f, 0.0f,
+        -1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+         1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+
+        // front
+        -1.0f,-1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+         1.0f,-1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+        -1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+         1.0f,-1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+         1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+        -1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+
+        // back
+        -1.0f,-1.0f,-1.0f, 0.0f, 0.0f, -1.0f,
+        -1.0f, 1.0f,-1.0f, 0.0f, 0.0f, -1.0f,
+         1.0f,-1.0f,-1.0f, 0.0f, 0.0f, -1.0f,
+         1.0f,-1.0f,-1.0f, 0.0f, 0.0f, -1.0f,
+        -1.0f, 1.0f,-1.0f, 0.0f, 0.0f, -1.0f,
+         1.0f, 1.0f,-1.0f, 0.0f, 0.0f, -1.0f,
+
+        // left
+        -1.0f,-1.0f, 1.0f, -1.0f, 0.0f, 0.0f,
+        -1.0f, 1.0f,-1.0f, -1.0f, 0.0f, 0.0f,
+        -1.0f,-1.0f,-1.0f, -1.0f, 0.0f, 0.0f,
+        -1.0f,-1.0f, 1.0f, -1.0f, 0.0f, 0.0f,
+        -1.0f, 1.0f, 1.0f, -1.0f, 0.0f, 0.0f,
+        -1.0f, 1.0f,-1.0f, -1.0f, 0.0f, 0.0f,
+
+        // right
+         1.0f,-1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+         1.0f,-1.0f,-1.0f, 1.0f, 0.0f, 0.0f,
+         1.0f, 1.0f,-1.0f, 1.0f, 0.0f, 0.0f,
+         1.0f,-1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+         1.0f, 1.0f,-1.0f, 1.0f, 0.0f, 0.0f,
+         1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f
     };
 
-    // Vertices. Starts syntax: x, y, r, g, b
-    float vertices[] = {
-        -0.5f, -0.5f, -0.5f,
-         0.5f, -0.5f, -0.5f,
-         0.5f,  0.5f, -0.5f,
-        -0.5f,  0.5f, -0.5f,
-        -0.5f, -0.5f,  0.5f,
-         0.5f, -0.5f,  0.5f,
-         0.5f,  0.5f,  0.5f,
-        -0.5f,  0.5f,  0.5f
-    };
-    GLuint vbo, vao, ebo;
-    glGenBuffers(1, &vbo); // Generate 1 buffer
+    GLuint vbo, vao;
+    glGenBuffers(1, &vbo);
     glGenVertexArrays(1, &vao);
+
     glBindVertexArray(vao);
-
-    glGenBuffers(1, &ebo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(elements), elements, GL_STATIC_DRAW);
-
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertexData), vertexData, GL_STATIC_DRAW);
 
-    //glBindBuffer(GL_ARRAY_BUFFER, ebo);
-    //glBufferData(GL_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-/*
-    std::string vertPath = "default.vert";
-    std::string fragPath = "default.frag";
-    unsigned int shaderProg = createShaderProgram(vertPath.c_str(), fragPath.c_str());
-    glUseProgram(shaderProg);
-*/
+    // Enable vertex attributes for position and normal
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (void*)0);
+    glEnableVertexAttribArray(0);
 
-    GLuint vertShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertShader, 1, &vertexSource, NULL);
-    glCompileShader(vertShader);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(1);
+
+    // Compile and link shaders
+    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertexShader, 1, &vertexSource, nullptr);
+    glCompileShader(vertexShader);
 
     GLuint fragShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragShader, 1, &fragSource, NULL);
+    glShaderSource(fragShader, 1, &fragSource, nullptr);
     glCompileShader(fragShader);
 
-    // Check if succesfully compiled
-    GLint status_v;
-    glGetShaderiv(vertShader, GL_COMPILE_STATUS, &status_v);
-    if (status_v == GL_FALSE) {
-        char buffer[512];
-        glGetShaderInfoLog(vertShader, 512, NULL, buffer);
-        printf("Failed to compile vert shader:\n%s\n", buffer);
-    }
-    GLint status_f;
-    glGetShaderiv(fragShader, GL_COMPILE_STATUS, &status_f);
-    if (status_f == GL_FALSE) {
-        char buffer[512];
-        glGetShaderInfoLog(fragShader, 512, NULL, buffer);
-        printf("Failed to compile frag shader:\n%s\n", buffer);
-    }
+    GLuint shaderProgram = glCreateProgram();
+    glAttachShader(shaderProgram, vertexShader);
+    glAttachShader(shaderProgram, fragShader);
+    glLinkProgram(shaderProgram);
 
-    GLuint shaderProg = glCreateProgram();
-    glAttachShader(shaderProg, vertShader);
-    glAttachShader(shaderProg, fragShader);
-    //glBindFragDataLocation(shaderProg, 0, "outColor");
-    glLinkProgram(shaderProg);
-    glUseProgram(shaderProg);
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragShader);
 
-    //GLint posAttrib = glGetAttribLocation(shaderProg, "position");
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, 0);
-    /*
-    GLint colAttrib = glGetAttribLocation(shaderProg, "color");
-    glEnableVertexAttribArray(colAttrib);
-    glVertexAttribPointer(colAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 5, (void*)(sizeof(GLfloat) * 2));
-    */
+    // Uniform locations
+    GLint modelLoc = glGetUniformLocation(shaderProgram, "model");
+    GLint viewLoc = glGetUniformLocation(shaderProgram, "view");
+    GLint projLoc = glGetUniformLocation(shaderProgram, "projection");
+    GLint lightPosLoc = glGetUniformLocation(shaderProgram, "light.position");
+    GLint lightIntLoc = glGetUniformLocation(shaderProgram, "light.intensities");
+    GLint ambientLoc = glGetUniformLocation(shaderProgram, "ambient");
 
-    // Tutorial about using uniforms
-    //GLint uniColor = glGetUniformLocation(shaderProg, "color");
-    //glUniform3f(uniColor, 1.0f, 0.5f, 0.2f);
-    //auto t_start = std::chrono::high_resolution_clock::now();
-
-    // Gebruik maken van 3D transformatie
-    glm::mat4 model = glm::mat4(1.0f); // Model matrix, geen transformaties
-    glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, -2.0f, -8.0f)); // Camera iets naar achteren
-    glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)mWidth / (float)mHeight, 0.1f, 100.0f); // Perspectiefprojectie
-
-    GLuint modelLoc = glGetUniformLocation(shaderProg, "model");
-    GLuint viewLoc = glGetUniformLocation(shaderProg, "view");
-    GLuint projLoc = glGetUniformLocation(shaderProg, "projection");
-
-    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-    glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
-
-    // Rendering Loop
-    while (glfwWindowShouldClose(mWindow) == false) {
-        if (glfwGetKey(mWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-            glfwSetWindowShouldClose(mWindow, true);
-
-        // Background Fill Color
-        glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
+    // Main rendering loop
+    while (!glfwWindowShouldClose(mWindow)) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glUseProgram(shaderProgram);
 
-        //glDrawArrays(GL_TRIANGLES, 0, 3);
-        /*
-        * len kan alleen berekend worden als de array in dezelfde scope zit.
-        * Anders, als het als arg meegegeven wordt, wordt de array omgezet in
-        * een pointer. Dan werkt het weer niet :/
-        */
-        size_t len = sizeof(elements) / sizeof(GLuint);
-        glDrawElements(GL_TRIANGLES, len, GL_UNSIGNED_INT, 0);
+        // Set up the view, projection, and model matrices
+        glm::mat4 view = glm::lookAt(glm::vec3(4.0f, 3.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)mWidth / mHeight, 0.1f, 10.0f);
+        glm::mat4 model = glm::mat4(1.0f);
 
-        // Change color
-        //auto t_now = std::chrono::high_resolution_clock::now();
-        //float delta = std::chrono::duration_cast<std::chrono::duration<float>>(t_now - t_start).count();
-        //glUniform3f(uniColor, (sin(delta * 4.0f) + 1.0f) / 2.0f, 0.5f, 0.2f);
+        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+        glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
-        // Flip Buffers and Draw
+        // Set up lighting
+        glUniform3f(lightPosLoc, 2.0f, 5.0f, 5.0f);
+        glUniform3f(lightIntLoc, 252.0f / 255.0f, 187.0f / 255.0f, 75.0f / 255.0f);
+        glUniform3f(ambientLoc, 51.0f / 255.0f, 35.0f / 255.0f, 47.0f / 255.0f);
+
+        glBindVertexArray(vao);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
         glfwSwapBuffers(mWindow);
         glfwPollEvents();
     }
-    
-    glDeleteProgram(shaderProg);
-    glDeleteShader(fragShader);
-    glDeleteShader(vertShader);
 
-    glDeleteBuffers(1, &vbo);
-    glDeleteBuffers(1, &ebo);
-
+    // Cleanup
     glDeleteVertexArrays(1, &vao);
-    
+    glDeleteBuffers(1, &vbo);
+    glDeleteProgram(shaderProgram);
+
+    glfwDestroyWindow(mWindow);
     glfwTerminate();
     return EXIT_SUCCESS;
 }
