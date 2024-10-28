@@ -31,11 +31,11 @@ void gradient_bg(
 ) {
         glDisable(GL_DEPTH_TEST);
 
-        static GLuint background_vao = 0;
+        static GLuint vao = 0;
         static GLuint shaderProg = 0;
 
-        if (background_vao == 0) {
-            glGenVertexArrays(1, &background_vao);
+        if (vao == 0) {
+            glGenVertexArrays(1, &vao);
 
             GLuint vs_id, fs_id;
             vs_id = glCreateShader(GL_VERTEX_SHADER);
@@ -61,7 +61,7 @@ void gradient_bg(
         glUniform4f(top_color_loc, top_r, top_g, top_b, top_a);
         glUniform4f(bot_color_loc, bottom_r, bottom_g, bottom_b, bottom_a);
 
-        glBindVertexArray(background_vao);
+        glBindVertexArray(vao);
         glDrawArrays(GL_TRIANGLES, 0, 3);
         glBindVertexArray(0);
 

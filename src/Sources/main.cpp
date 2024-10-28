@@ -1,6 +1,7 @@
 // Local Headers
 #include "glitter.hpp"
 #include "bg.hpp"
+#include "cube.hpp"
 
 // System Headers
 #include <glad/glad.h>
@@ -79,64 +80,11 @@ int main(int argc, char * argv[]) {
     gladLoadGL();
     glEnable(GL_DEPTH_TEST);
 
-    GLfloat vertexData[] = {
-        // x, y, z, normalx, normaly, normalz
-        // bottom
-        -1.0f,-1.0f,-1.0f, 0.0f, -1.0f, 0.0f,
-         1.0f,-1.0f,-1.0f, 0.0f, -1.0f, 0.0f,
-        -1.0f,-1.0f, 1.0f, 0.0f, -1.0f, 0.0f,
-         1.0f,-1.0f,-1.0f, 0.0f, -1.0f, 0.0f,
-         1.0f,-1.0f, 1.0f, 0.0f, -1.0f, 0.0f,
-        -1.0f,-1.0f, 1.0f, 0.0f, -1.0f, 0.0f,
-
-        // top
-        -1.0f, 1.0f,-1.0f, 0.0f, 1.0f, 0.0f,
-        -1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-         1.0f, 1.0f,-1.0f, 0.0f, 1.0f, 0.0f,
-         1.0f, 1.0f,-1.0f, 0.0f, 1.0f, 0.0f,
-        -1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-         1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-
-        // front
-        -1.0f,-1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-         1.0f,-1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-        -1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-         1.0f,-1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-         1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-        -1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-
-        // back
-        -1.0f,-1.0f,-1.0f, 0.0f, 0.0f, -1.0f,
-        -1.0f, 1.0f,-1.0f, 0.0f, 0.0f, -1.0f,
-         1.0f,-1.0f,-1.0f, 0.0f, 0.0f, -1.0f,
-         1.0f,-1.0f,-1.0f, 0.0f, 0.0f, -1.0f,
-        -1.0f, 1.0f,-1.0f, 0.0f, 0.0f, -1.0f,
-         1.0f, 1.0f,-1.0f, 0.0f, 0.0f, -1.0f,
-
-        // left
-        -1.0f,-1.0f, 1.0f, -1.0f, 0.0f, 0.0f,
-        -1.0f, 1.0f,-1.0f, -1.0f, 0.0f, 0.0f,
-        -1.0f,-1.0f,-1.0f, -1.0f, 0.0f, 0.0f,
-        -1.0f,-1.0f, 1.0f, -1.0f, 0.0f, 0.0f,
-        -1.0f, 1.0f, 1.0f, -1.0f, 0.0f, 0.0f,
-        -1.0f, 1.0f,-1.0f, -1.0f, 0.0f, 0.0f,
-
-        // right
-         1.0f,-1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
-         1.0f,-1.0f,-1.0f, 1.0f, 0.0f, 0.0f,
-         1.0f, 1.0f,-1.0f, 1.0f, 0.0f, 0.0f,
-         1.0f,-1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
-         1.0f, 1.0f,-1.0f, 1.0f, 0.0f, 0.0f,
-         1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f
-    };
-
-    GLuint vbo, vao;
-    glGenBuffers(1, &vbo);
+    Cube cube = Cube();
+    GLuint vao;
     glGenVertexArrays(1, &vao);
 
     glBindVertexArray(vao);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertexData), vertexData, GL_STATIC_DRAW);
 
     // Enable vertex attributes for position and normal
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (void*)0);
@@ -196,7 +144,7 @@ int main(int argc, char * argv[]) {
         glUniform3f(ambientLoc, 51.0f / 255.0f, 35.0f / 255.0f, 47.0f / 255.0f);
 
         glBindVertexArray(vao);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        cube.draw();
 
         glfwSwapBuffers(mWindow);
         glfwPollEvents();
@@ -204,7 +152,6 @@ int main(int argc, char * argv[]) {
 
     // Cleanup
     glDeleteVertexArrays(1, &vao);
-    glDeleteBuffers(1, &vbo);
     glDeleteProgram(shaderProgram);
 
     glfwDestroyWindow(mWindow);
