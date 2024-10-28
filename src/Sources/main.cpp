@@ -1,5 +1,6 @@
 // Local Headers
 #include "glitter.hpp"
+#include "bg.hpp"
 
 // System Headers
 #include <glad/glad.h>
@@ -172,6 +173,12 @@ int main(int argc, char * argv[]) {
     // Main rendering loop
     while (!glfwWindowShouldClose(mWindow)) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        gradient_bg(
+            223.0f / 255.0f, 84.0f / 255.0f, 32.0f / 255.0f, 1.0f,
+            119.0f / 255.0f, 33.0f / 255.0f, 111.0f / 255.0f, 1.0f
+        );
+
         glUseProgram(shaderProgram);
 
         // Set up the view, projection, and model matrices
