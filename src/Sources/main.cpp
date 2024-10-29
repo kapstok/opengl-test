@@ -118,6 +118,8 @@ int main(int argc, char * argv[]) {
     GLint lightIntLoc = glGetUniformLocation(shaderProgram, "light.intensities");
     GLint ambientLoc = glGetUniformLocation(shaderProgram, "ambient");
 
+    float angle = 0.0f;
+
     // Main rendering loop
     while (!glfwWindowShouldClose(mWindow)) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -133,6 +135,9 @@ int main(int argc, char * argv[]) {
         glm::mat4 view = glm::lookAt(glm::vec3(4.0f, 3.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)mWidth / mHeight, 0.1f, 10.0f);
         glm::mat4 model = glm::mat4(1.0f);
+
+        angle += 0.01f;
+        model = glm::rotate(model, angle, glm::vec3(0.0f, 1.0f, 0.0f));
 
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
