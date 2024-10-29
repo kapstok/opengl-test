@@ -9,12 +9,10 @@ public:
 		GLfloat x1, GLfloat y1, GLfloat z1,
 		GLfloat x2, GLfloat y2, GLfloat z2,
 		GLfloat x3, GLfloat y3, GLfloat z3,
-		GLfloat x4, GLfloat y4, GLfloat z4,
-		GLfloat nx, GLfloat ny, GLfloat nz
+		GLfloat x4, GLfloat y4, GLfloat z4
 	) : vertexData {
 		x1, y1, z1, x2, y2, z2,
-		x3, y3, z3, x4, y4, z4,
-		nx, ny, nz
+		x3, y3, z3, x4, y4, z4
 	} {}
 
 	// Do not forget to free
@@ -22,7 +20,7 @@ public:
 
 	void calculateNormal(GLfloat &x, GLfloat &y, GLfloat &z);
 private:
-	GLfloat vertexData[15];
+	GLfloat vertexData[12];
 };
 
 class Cube {
