@@ -1,14 +1,14 @@
 #include "cube.hpp"
 #include "glitter.hpp"
 
-GLfloat* Face::getVertData() {
+GLfloat* Face::getVBOData(bool noRecalc) {
 	GLfloat* result = new GLfloat[36];
 
 	// Punt A
 	result[0] = this->vertexData[0];
 	result[1] = this->vertexData[1];
 	result[2] = this->vertexData[2];
-	this->calculateNormal(result[3], result[4], result[5]);
+	this->calculateNormal(result[3], result[4], result[5], noRecalc);
 
 	// Punt B
 	result[6] = this->vertexData[3];
@@ -53,95 +53,142 @@ GLfloat* Face::getVertData() {
 	return result;
 }
 
-void Face::calculateNormal(GLfloat &x, GLfloat &y, GLfloat &z) {
-	glm::vec3 result = glm::vec3(
-		this->vertexData[0],
-		this->vertexData[1],
-		this->vertexData[2]
-	);
+GLfloat* Face::getVertices() {
+	return this->vertexData;
+}
 
-	for (int i = 1; i < 4; i++) {
-		for (int j = 0; j < 3; j++) {
-			if (result[j] != this->vertexData[i * 3 + j]) {
-				result[j] = 0;
-			}
-		}
-	}
+void Face::calculateNormal(GLfloat &x, GLfloat &y, GLfloat &z, bool noRecalc) {
+    glm::vec3 pA(this->vertexData[0], this->vertexData[1], this->vertexData[2]);
+    glm::vec3 pB(this->vertexData[3], this->vertexData[4], this->vertexData[5]);
+    glm::vec3 pC(this->vertexData[9], this->vertexData[10], this->vertexData[11]);
+    glm::vec3 edgeBA = pB - pA;
+    glm::vec3 edgeCA = pC - pA;
 
-	result = glm::normalize(result);
-	x = result.x;
-	y = result.y;
-	z = result.z;
+    glm::vec3 normal = glm::cross(edgeBA, edgeCA);
+    normal = glm::normalize(normal);
+
+    glm::vec3 faceCenter = (pA + pB + pC) / 3.0f;
+    glm::vec3 toCenter = faceCenter - parent->getCenter(noRecalc);
+
+    // If the normal points toward the reference point, flip it
+    if (glm::dot(normal, toCenter) < 0) {
+        normal *= -1;
+    }
+
+    x = normal.x;
+    y = normal.y;
+    z = normal.z;
 }
 
 Cube::Cube() {
 	Face bottom = {
+		this,
 		-1, -1, -1,
 		 1, -1, -1,
 		 1, -1,  1,
 		-1, -1,  1
 	};
 	Face top = {
+		this,
 		-1,  1, -1,
 		 1,  1, -1,
 		 1,  1,  1,
 		-1,  1,  1
 	};
 	Face front = {
+		this,
 		 1, -1, -1,
 		 1,  1, -1,
 		 1,  1,  1,
 		 1, -1,  1
 	};
 	Face back = {
+		this,
 		-1, -1, -1,
 		-1,  1, -1,
 		-1,  1,  1,
 		-1, -1,  1
 	};
 	Face left = {
+		this,
 		 1, -1, 1,
 		 1,  1, 1,
 		-1,  1, 1,
 		-1, -1, 1
 	};
 	Face right = {
+		this,
 		 1, -1, -1,
 		 1,  1, -1,
 		-1,  1, -1,
 		-1, -1, -1
 	};
 
-	this->vertexData.push_back(bottom);
-	this->vertexData.push_back(top);
-	this->vertexData.push_back(front);
-	this->vertexData.push_back(back);
-	this->vertexData.push_back(left);
-	this->vertexData.push_back(right);
+	this->faces.push_back(bottom);
+	this->faces.push_back(top);
+	this->faces.push_back(front);
+	this->faces.push_back(back);
+	this->faces.push_back(left);
+	this->faces.push_back(right);
 
 	glGenBuffers(1, &this->vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, this->vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 36 * this->vertexData.size(), this->getVertData(this->vertDataSize), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 36 * this->faces.size(), this->getVertData(), GL_STATIC_DRAW);
 }
 
 Cube::~Cube() {
 	glDeleteBuffers(1, &this->vbo);
+	delete[] this->vertexData;
 }
 
-GLfloat* Cube::getVertData(size_t &size) {
-	size = this->vertexData.size() * 36;
-	GLfloat* result = new GLfloat[size];
+GLfloat* Cube::getVertData() {
+	if (!this->needs_recalc) {
+		return this->vertexData;
+	}
 
-	for (size_t i = 0; i < this->vertexData.size(); i++) {
-		GLfloat* faceData = this->vertexData[i].getVertData();
-		memcpy(result + i * 36, faceData, sizeof(GLfloat) * 36);
+	if (this->vertexData != NULL) {
+		delete[] this->vertexData;
+	}
+
+	this->vertDataSize = this->faces.size() * 36;
+	GLfloat* data = new GLfloat[this->vertDataSize];
+
+	/*
+		Recalculate the center.
+		Note: This has to be calculated before we loop
+		through the faceData, as the normals of the
+		faceData is calculated by this->center.
+	*/
+	this->center = glm::vec3(0, 0, 0);
+	for (size_t i = 0; i < this->faces.size(); i++) {
+		GLfloat* vertices = this->faces[i].getVertices();
+		for (size_t j = 0; j < 12; j++) {
+			center[j % 3] = vertices[j];
+		}
+	}
+	center /= this->faces.size() * 12;
+
+	for (size_t i = 0; i < this->faces.size(); i++) {
+		GLfloat* faceData = this->faces[i].getVBOData(true);
+		memcpy(data + i * 36, faceData, sizeof(GLfloat) * 36);
 		delete[] faceData;
 	}
-	return result;
+
+	this->needs_recalc = false;
+	this->vertexData = data;
+	return data;
 }
 
 void Cube::draw() {
 	glDrawArrays(GL_TRIANGLES, 0, this->vertDataSize);
+}
+
+glm::vec3 Cube::getCenter(bool noRecalc) {
+	if (this->needs_recalc && !noRecalc) {
+		this->getVertData();
+	}
+
+	return this->center;
 }
 
 void Cube::resizeVertexBufferObject(GLint newSize) {
@@ -162,6 +209,7 @@ void Cube::resizeVertexBufferObject(GLint newSize) {
 
 		glDeleteBuffers(1, &this->vbo);
 		this->vbo = newVbo;
+		this->needs_recalc = true;
 	} else {
 		glDeleteBuffers(1, &newVbo);
 	}

@@ -3,9 +3,12 @@
 #include "glitter.hpp"
 #include <vector>
 
+class Cube;
+
 class Face {
 public:
 	Face(
+		Cube* cube,
 		GLfloat x1, GLfloat y1, GLfloat z1,
 		GLfloat x2, GLfloat y2, GLfloat z2,
 		GLfloat x3, GLfloat y3, GLfloat z3,
@@ -13,14 +16,15 @@ public:
 	) : vertexData {
 		x1, y1, z1, x2, y2, z2,
 		x3, y3, z3, x4, y4, z4
-	} {}
+	}, parent(cube) {}
 
-	// Do not forget to free
-	GLfloat* getVertData();
+	GLfloat* getVBOData(bool noRecalc); // Do not forget to free
+	GLfloat* getVertices(); // No need to free
 
-	void calculateNormal(GLfloat &x, GLfloat &y, GLfloat &z);
+	void calculateNormal(GLfloat &x, GLfloat &y, GLfloat &z, bool noRecalc);
 private:
 	GLfloat vertexData[12];
+	Cube* parent;
 };
 
 class Cube {
@@ -28,12 +32,15 @@ public:
 	Cube();
 	~Cube();
 
-	// Do not forget to free
-	GLfloat* getVertData(size_t& size);
+	GLfloat* getVertData(); // No need to free
 	void draw();
+	glm::vec3 getCenter(bool noRecalc);
 private:
-	std::vector<Face> vertexData;
+	std::vector<Face> faces;
 	size_t vertDataSize = 0;
+	bool needs_recalc = true;
+	GLfloat* vertexData = NULL;
+	glm::vec3 center;
 	GLuint vbo;
 	void resizeVertexBufferObject(GLint newSize);
 };
