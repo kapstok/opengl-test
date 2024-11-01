@@ -83,57 +83,153 @@ void Face::calculateNormal(GLfloat &x, GLfloat &y, GLfloat &z, bool noRecalc) {
 Cube::Cube() {
 	Face bottom = {
 		this,
-		-1, -1, -1,
-		 1, -1, -1,
-		 1, -1,  1,
-		-1, -1,  1
+		-0.8f, -1, -0.8f,
+		 0.8f, -1, -0.8f,
+		 0.8f, -1,  0.8f,
+		-0.8f, -1,  0.8f
 	};
 	Face top = {
 		this,
-		-1,  1, -1,
-		 1,  1, -1,
-		 1,  1,  1,
-		-1,  1,  1
+		-0.8f,  1, -0.8f,
+		 0.8f,  1, -0.8f,
+		 0.8f,  1,  0.8f,
+		-0.8f,  1,  0.8f
+	};
+	Face fronttop = {
+		this,
+		 1,  0.8f,  0.8f,	// Front C
+		 1,  0.8f,  -0.8f,	// Front B
+		 0.8f,  1, -0.8f,	// Top B
+		 0.8f,  1,  0.8f	// Top C
 	};
 	Face front = {
 		this,
-		 1, -1, -1,
-		 1,  1, -1,
-		 1,  1,  1,
-		 1, -1,  1
+		 1, -0.8f, -0.8f,
+		 1,  0.8f, -0.8f,
+		 1,  0.8f,  0.8f,
+		 1, -0.8f,  0.8f
 	};
-	Face back = {
+	Face frontbottom = {
 		this,
-		-1, -1, -1,
-		-1,  1, -1,
-		-1,  1,  1,
-		-1, -1,  1
+		 1, -0.8f, -0.8f, // Front A
+		 1, -0.8f,  0.8f, // Front D
+		 0.8f, -1,  0.8f, // Bottom C
+		 0.8f, -1, -0.8f  // Bottom B
+	};
+	Face frontleft = {
+		this,
+		 1,  0.8f,  0.8f, // Front C
+		 1, -0.8f,  0.8f, // Front D
+		 0.8f, -0.8f,  1, // Left A
+		 0.8f,  0.8f,  1  // Left B
+	};
+	Face lefttop = {
+		this,
+		-0.8f,  0.8f,  1, // Left C
+		 0.8f,  0.8f,  1, // Left B
+		 0.8f,  1,  0.8f, // Top C
+		-0.8f,  1,  0.8f  // Top D
 	};
 	Face left = {
 		this,
-		 1, -1, 1,
-		 1,  1, 1,
-		-1,  1, 1,
-		-1, -1, 1
+		 0.8f, -0.8f, 1,
+		 0.8f,  0.8f, 1,
+		-0.8f,  0.8f, 1,
+		-0.8f, -0.8f, 1
+	};
+	Face leftbottom = {
+		this,
+		 0.8f, -0.8f,  1, // Left A
+		-0.8f, -0.8f,  1, // Left D
+		-0.8f, -1,  0.8f, // Bottom D
+		 0.8f, -1,  0.8f  // Bottom C
+	};
+	Face leftback = {
+		this,
+		-0.8f,  0.8f,  1, // Left C
+		-0.8f, -0.8f,  1, // Left D
+		-1, -0.8f,  0.8f, // Back D
+		-1,  0.8f,  0.8f  // Back C
+	};
+	Face backtop = {
+		this,
+		-1,  0.8f,  0.8f, // Back C
+		-1,  0.8f, -0.8f, // Back B
+		-0.8f,  1, -0.8f, // Top A
+		-0.8f,  1,  0.8f  // Top D
+	};
+	Face back = {
+		this,
+		-1, -0.8f, -0.8f,
+		-1,  0.8f, -0.8f,
+		-1,  0.8f,  0.8f,
+		-1, -0.8f,  0.8f
+	};
+	Face backbottom = {
+		this,
+		-1, -0.8f, -0.8f, // Back A
+		-1, -0.8f,  0.8f, // Back D
+		-0.8f, -1,  0.8f, // Bottom D
+		-0.8f, -1, -0.8f  // Bottom A
+	};
+	Face backright = {
+		this,
+		-1, -0.8f, -0.8f, // Back A
+		-1,  0.8f, -0.8f, // Back B
+		-0.8f,  0.8f, -1, // Right C
+		-0.8f, -0.8f, -1  // Right D
+	};
+	Face righttop = {
+		this,
+		-0.8f,  0.8f, -1, // Right C
+		 0.8f,  0.8f, -1, // Right B
+		 0.8f,  1, -0.8f, // Top B
+		-0.8f,  1, -0.8f  // Top A
 	};
 	Face right = {
 		this,
-		 1, -1, -1,
-		 1,  1, -1,
-		-1,  1, -1,
-		-1, -1, -1
+		 0.8f, -0.8f, -1,
+		 0.8f,  0.8f, -1,
+		-0.8f,  0.8f, -1,
+		-0.8f, -0.8f, -1
+	};
+	Face rightbottom = {
+		this,
+		 0.8f, -0.8f, -1, // Right A
+		-0.8f, -0.8f, -1, // Right D
+		-0.8f, -1, -0.8f, // Bottom A
+		 0.8f, -1, -0.8f  // Bottom B
+	};
+	Face rightfront = {
+		this,
+		 0.8f,  0.8f, -1, // Right B
+		 0.8f, -0.8f, -1, // Right A
+		 1, -0.8f, -0.8f, // Front A
+		 1,  0.8f, -0.8f  // Front B
 	};
 
 	this->faces.push_back(bottom);
 	this->faces.push_back(top);
+	this->faces.push_back(fronttop);
 	this->faces.push_back(front);
-	this->faces.push_back(back);
+	this->faces.push_back(frontbottom);
+	this->faces.push_back(frontleft);
+	this->faces.push_back(lefttop);
 	this->faces.push_back(left);
+	this->faces.push_back(leftbottom);
+	this->faces.push_back(leftback);
+	this->faces.push_back(backtop);
+	this->faces.push_back(back);
+	this->faces.push_back(backbottom);
+	this->faces.push_back(backright);
+	this->faces.push_back(righttop);
 	this->faces.push_back(right);
+	this->faces.push_back(rightbottom);
+	this->faces.push_back(rightfront);
 
 	glGenBuffers(1, &this->vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, this->vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 36 * this->faces.size(), this->getVertData(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 36 * this->faces.size(), this->getVertData(), GL_STREAM_DRAW);
 }
 
 Cube::~Cube() {
