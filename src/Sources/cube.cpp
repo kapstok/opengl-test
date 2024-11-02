@@ -1,5 +1,8 @@
 #include "cube.hpp"
 #include "glitter.hpp"
+#include "arc.hpp"
+
+#include <vector>
 
 GLfloat* Face::getVBOData(bool noRecalc) {
 	GLfloat* result = new GLfloat[36];
@@ -95,6 +98,13 @@ Cube::Cube() {
 		 0.8f,  1,  0.8f,
 		-0.8f,  1,  0.8f
 	};
+	std::vector<Face> fronttoparc = faceToArc(
+		{ 1,  0.8f,  0.8f},
+		{ 1,  0.8f, -0.8f},
+		{ 0.8f,  1, -0.8f},
+		{ 0.8f,  1,  0.8f},
+		3, 1
+	);
 	Face fronttop = {
 		this,
 		 1,  0.8f,  0.8f,	// Front C
@@ -208,9 +218,14 @@ Cube::Cube() {
 		 1,  0.8f, -0.8f  // Front B
 	};
 
+	for (size_t i = 0; i < fronttoparc.size(); i++) {
+		fronttoparc[i].parent = this;
+	}
+
 	this->faces.push_back(bottom);
 	this->faces.push_back(top);
-	this->faces.push_back(fronttop);
+	//this->faces.push_back(fronttop);
+	this->faces.push_back(fronttoparc[0]);
 	this->faces.push_back(front);
 	this->faces.push_back(frontbottom);
 	this->faces.push_back(frontleft);
