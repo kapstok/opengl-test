@@ -4,9 +4,11 @@
 #include "cube.hpp"
 #include <vector>
 
-std::vector<Face> faceToArc(
-    glm::vec3 startA, glm::vec3 endA,
-    glm::vec3 startB, glm::vec3 endB,
+enum Axis {X, Y, Z};
+
+Face faceToArc(
+    glm::vec2 start, glm::vec2 end,
+    Axis axis,
     float interval, float offset
 );
 

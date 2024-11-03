@@ -3,6 +3,7 @@
 #include "arc.hpp"
 
 #include <vector>
+#include <iostream>
 
 GLfloat* Face::getVBOData(bool noRecalc) {
 	GLfloat* result = new GLfloat[36];
@@ -98,12 +99,26 @@ Cube::Cube() {
 		 0.8f,  1,  0.8f,
 		-0.8f,  1,  0.8f
 	};
-	std::vector<Face> fronttoparc = faceToArc(
+	/*std::vector<Face> fronttoparc = faceToArc(
 		{ 1,  0.8f,  0.8f},
-		{ 1,  0.8f, -0.8f},
 		{ 0.8f,  1, -0.8f},
+		{ 1,  0.8f, -0.8f},
 		{ 0.8f,  1,  0.8f},
 		3, 1
+	);*/
+	Face arc0 = faceToArc(
+		{ 0.8f,  1},
+		{ 1,  0.8f},
+		//{ 0.8f,  1, -0.8f },
+		//{ 0.8f,  1,  0.8f },
+		//{ 1,  0.8f, -0.8f },
+		//{ 1,  0.8f,  0.8f },
+		Z, 3, 1
+	);
+	Face arc1 = faceToArc(
+		{ 0.973205f,  0.9f },
+		{ 1, 0.8f},
+		Z, 3, 2
 	);
 	Face fronttop = {
 		this,
@@ -218,14 +233,17 @@ Cube::Cube() {
 		 1,  0.8f, -0.8f  // Front B
 	};
 
-	for (size_t i = 0; i < fronttoparc.size(); i++) {
-		fronttoparc[i].parent = this;
-	}
 
 	this->faces.push_back(bottom);
 	this->faces.push_back(top);
-	//this->faces.push_back(fronttop);
-	this->faces.push_back(fronttoparc[0]);
+
+	//for (size_t i = 0; i < fronttoparc.size(); i++) {
+		arc0.parent = this;
+		this->faces.push_back(arc0);
+		arc1.parent = this;
+		this->faces.push_back(arc1);
+	//}
+
 	this->faces.push_back(front);
 	this->faces.push_back(frontbottom);
 	this->faces.push_back(frontleft);
@@ -281,6 +299,11 @@ GLfloat* Cube::getVertData() {
 
 	for (size_t i = 0; i < this->faces.size(); i++) {
 		GLfloat* faceData = this->faces[i].getVBOData(true);
+		for (size_t j = 0; j < 36; j++) {
+			if (j % 3 == 0) std::cout << std::endl;
+			std::cout << faceData[j] << ' ';
+		}
+		std::cout << std::endl << "---" << std::endl;
 		memcpy(data + i * 36, faceData, sizeof(GLfloat) * 36);
 		delete[] faceData;
 	}

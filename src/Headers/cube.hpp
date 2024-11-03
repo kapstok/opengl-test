@@ -7,6 +7,7 @@ class Cube;
 
 class Face {
 public:
+	Face() : parent(NULL), vertexData{} {};
 	Face(
 		Cube* cube,
 		GLfloat x1, GLfloat y1, GLfloat z1,
