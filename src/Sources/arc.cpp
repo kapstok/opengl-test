@@ -29,6 +29,14 @@ glm::vec2 getArcPosition(
     return result;
 }
 
+/*
+static Face faceToArc(
+    glm::vec2 start, glm::vec2 end, glm::vec2 prevPos,
+    Axis axis, float interval, float offset,
+) {
+
+}*/
+
 Face faceToArc(
     glm::vec2 start, glm::vec2 end,
     Axis axis,
@@ -51,18 +59,27 @@ Face faceToArc(
         case Z:
             face = {
                 NULL,
-                start.y,  start.x,  0.8f,	// Front C
-                start.y,  start.x,  -0.8f,	// Front B
-                position2D.x,  1-position2D.y, -0.8f,	// Top B
-                position2D.x,  1-position2D.y,  0.8f	// Top C
+                start.y,  start.x,  0.8f,
+                start.y,  start.x,  -0.8f,
+                position2D.x,  0.8f + position2D.y, -0.8f,
+                position2D.x,  0.8f + position2D.y,  0.8f
             };
             if (offset == 2) {
                 face = {
                     NULL,
-                    0.973205f, 0.9f,  0.8f,	// Front C
-                    0.973205f, 0.9f, -0.8f,	// Front B
-                    position2D.x,  1 - position2D.y, -0.8f,	// Top B
-                    position2D.x,  1 - position2D.y,  0.8f	// Top C
+                    0.973205f, 0.9f,  0.8f,
+                    0.973205f, 0.9f, -0.8f,
+                    position2D.x,  0.8f + position2D.y, -0.8f,
+                    position2D.x,  0.8f + position2D.y,  0.8f
+                };
+            }
+            if (offset == 3) {
+                face = {
+                    NULL,
+                    0.9f, 0.973205f,  0.8f,
+                    0.9f, 0.973205f, -0.8f,
+                    position2D.x, 0.8f + position2D.y, -0.8f,
+                    position2D.x, 0.8f + position2D.y, 0.8f
                 };
             }
             break;

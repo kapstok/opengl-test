@@ -116,9 +116,15 @@ Cube::Cube() {
 		Z, 3, 1
 	);
 	Face arc1 = faceToArc(
-		{ 0.973205f,  0.9f },
+		//{ 0.973205f,  0.9f },
+		{0.8f, 1},
 		{ 1, 0.8f},
 		Z, 3, 2
+	);
+	Face arc2 = faceToArc(
+		{ 0.8f, 1 },
+		{ 1, 0.8f },
+		Z, 3, 3
 	);
 	Face fronttop = {
 		this,
@@ -242,6 +248,8 @@ Cube::Cube() {
 		this->faces.push_back(arc0);
 		arc1.parent = this;
 		this->faces.push_back(arc1);
+		arc2.parent = this;
+		this->faces.push_back(arc2);
 	//}
 
 	this->faces.push_back(front);
