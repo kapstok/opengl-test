@@ -6,10 +6,9 @@
 
 enum Axis {X, Y, Z};
 
-Face faceToArc(
+std::vector<Face> faceToArc(
     glm::vec2 start, glm::vec2 end,
-    Axis axis,
-    float interval, float offset
+    Axis axis, float interval
 );
 
 glm::vec2 getArcPosition(

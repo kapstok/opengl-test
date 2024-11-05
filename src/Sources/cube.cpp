@@ -99,40 +99,18 @@ Cube::Cube() {
 		 0.8f,  1,  0.8f,
 		-0.8f,  1,  0.8f
 	};
-	/*std::vector<Face> fronttoparc = faceToArc(
-		{ 1,  0.8f,  0.8f},
-		{ 0.8f,  1, -0.8f},
-		{ 1,  0.8f, -0.8f},
-		{ 0.8f,  1,  0.8f},
-		3, 1
-	);*/
-	Face arc0 = faceToArc(
+	std::vector<Face> fronttoparc = faceToArc(
 		{ 0.8f,  1},
 		{ 1,  0.8f},
-		//{ 0.8f,  1, -0.8f },
-		//{ 0.8f,  1,  0.8f },
-		//{ 1,  0.8f, -0.8f },
-		//{ 1,  0.8f,  0.8f },
-		Z, 3, 1
+		Z, 3
 	);
-	Face arc1 = faceToArc(
-		//{ 0.973205f,  0.9f },
-		{0.8f, 1},
-		{ 1, 0.8f},
-		Z, 3, 2
-	);
-	Face arc2 = faceToArc(
-		{ 0.8f, 1 },
-		{ 1, 0.8f },
-		Z, 3, 3
-	);
-	Face fronttop = {
+	/*Face fronttop = {
 		this,
 		 1,  0.8f,  0.8f,	// Front C
 		 1,  0.8f,  -0.8f,	// Front B
 		 0.8f,  1, -0.8f,	// Top B
 		 0.8f,  1,  0.8f	// Top C
-	};
+	};*/
 	Face front = {
 		this,
 		 1, -0.8f, -0.8f,
@@ -140,27 +118,42 @@ Cube::Cube() {
 		 1,  0.8f,  0.8f,
 		 1, -0.8f,  0.8f
 	};
-	Face frontbottom = {
+	std::vector<Face> frontbottomarc = faceToArc(
+		{0.8f, -1},
+		{1, -0.8f},
+		Z, 3
+	);
+	/*Face frontbottom = {
 		this,
 		 1, -0.8f, -0.8f, // Front A
 		 1, -0.8f,  0.8f, // Front D
 		 0.8f, -1,  0.8f, // Bottom C
 		 0.8f, -1, -0.8f  // Bottom B
-	};
-	Face frontleft = {
+	};*/
+	/*Face frontleft = {
 		this,
 		 1,  0.8f,  0.8f, // Front C
 		 1, -0.8f,  0.8f, // Front D
 		 0.8f, -0.8f,  1, // Left A
 		 0.8f,  0.8f,  1  // Left B
-	};
-	Face lefttop = {
+	};*/
+	std::vector<Face> frontleftarc = faceToArc(
+		{0.8f, 1},
+		{1, 0.8f},
+		Y, 3
+	);
+	/*Face lefttop = {
 		this,
 		-0.8f,  0.8f,  1, // Left C
 		 0.8f,  0.8f,  1, // Left B
 		 0.8f,  1,  0.8f, // Top C
 		-0.8f,  1,  0.8f  // Top D
-	};
+	};*/
+	std::vector<Face> lefttoparc = faceToArc(
+		{0.8f, 1},
+		{1, 0.8f},
+		X, 3
+	);
 	Face left = {
 		this,
 		 0.8f, -0.8f, 1,
@@ -168,13 +161,18 @@ Cube::Cube() {
 		-0.8f,  0.8f, 1,
 		-0.8f, -0.8f, 1
 	};
-	Face leftbottom = {
+	/*Face leftbottom = {
 		this,
 		 0.8f, -0.8f,  1, // Left A
 		-0.8f, -0.8f,  1, // Left D
 		-0.8f, -1,  0.8f, // Bottom D
 		 0.8f, -1,  0.8f  // Bottom C
-	};
+	};*/
+	std::vector<Face> leftbottomarc = faceToArc(
+		{-0.8f, 1},
+		{-1, 0.8f},
+		X, 3
+	);
 	Face leftback = {
 		this,
 		-0.8f,  0.8f,  1, // Left C
@@ -243,21 +241,36 @@ Cube::Cube() {
 	this->faces.push_back(bottom);
 	this->faces.push_back(top);
 
-	//for (size_t i = 0; i < fronttoparc.size(); i++) {
-		arc0.parent = this;
-		this->faces.push_back(arc0);
-		arc1.parent = this;
-		this->faces.push_back(arc1);
-		arc2.parent = this;
-		this->faces.push_back(arc2);
-	//}
+	for (size_t i = 0; i < fronttoparc.size(); i++) {
+		fronttoparc[i].parent = this;
+		this->faces.push_back(fronttoparc[i]);
+	}
 
 	this->faces.push_back(front);
-	this->faces.push_back(frontbottom);
-	this->faces.push_back(frontleft);
-	this->faces.push_back(lefttop);
+
+	for (size_t i = 0; i < frontbottomarc.size(); i++) {
+		frontbottomarc[i].parent = this;
+		this->faces.push_back(frontbottomarc[i]);
+	}
+
+	for (size_t i = 0; i < frontleftarc.size(); i++) {
+		frontleftarc[i].parent = this;
+		this->faces.push_back(frontleftarc[i]);
+	}
+
+	for (size_t i = 0; i < lefttoparc.size(); i++) {
+		lefttoparc[i].parent = this;
+		this->faces.push_back(lefttoparc[i]);
+	}
+
 	this->faces.push_back(left);
-	this->faces.push_back(leftbottom);
+
+	// NOTE: Werkt nog niet
+	for (size_t i = 0; i < leftbottomarc.size(); i++) {
+		leftbottomarc[i].parent = this;
+		//this->faces.push_back(leftbottomarc[i]);
+	}
+
 	this->faces.push_back(leftback);
 	this->faces.push_back(backtop);
 	this->faces.push_back(back);
